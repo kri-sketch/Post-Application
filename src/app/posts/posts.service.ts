@@ -3,13 +3,14 @@ import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { map } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 @Injectable({ providedIn: 'root' })
 export class PostsService {
   private posts: Post[] = [];
   private postsUpdated = new Subject<Post[]>();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   getPosts() {
     this.http
@@ -56,6 +57,7 @@ export class PostsService {
         post.id = id;
         this.posts.push(post);
         this.postsUpdated.next([...this.posts]);
+        this.router.navigate(['/']);
       });
   }
   deletePost(postId: any) {
@@ -69,16 +71,18 @@ export class PostsService {
   }
   updatePost(id: string, title: string, content: string) {
     const post: Post = { id: id, title: title, content: content };
-    this.http
-      .put('http://localhost:3000/api/posts/' + id, post)
-      .subscribe((response) => {
+    this.http.put('http://localhost:3000/api/posts/' + id, post).subscribe(
+      (response) => {
         const updatePosts = [...this.posts];
         const oldPostIndex = updatePosts.findIndex((p) => p.id === post.id);
         updatePosts[oldPostIndex] = post;
         this.posts = updatePosts;
         this.postsUpdated.next([...this.posts]);
-      },  (error) => {
+        this.router.navigate(['/']);
+      },
+      (error) => {
         console.error('PUT request error:', error);
-      });
+      }
+    );
   }
 }
