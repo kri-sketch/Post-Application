@@ -17,6 +17,7 @@ export class PostCreateComponent implements OnInit {
   post: Post | undefined;
   isLoading = false;
   form!: FormGroup;
+  imagePreview!: string;
 
   constructor(
     public postsService: PostsService,
@@ -29,6 +30,7 @@ export class PostCreateComponent implements OnInit {
         validators: [Validators.required, Validators.minLength(3)],
       }),
       content: new FormControl(null, { validators: [Validators.required] }),
+      image: new FormControl(null, { validators: Validators.required }),
     });
     this.route.paramMap.subscribe((paramMap: ParamMap) => {
       if (paramMap.has('postId')) {
@@ -53,6 +55,29 @@ export class PostCreateComponent implements OnInit {
         this.postId = 'null';
       }
     });
+  }
+
+  onImagePicked(event: Event) {
+    const inputElement = event.target as HTMLInputElement;
+
+    if (inputElement && inputElement.files && inputElement.files.length > 0) {
+      const file = inputElement.files[0];
+      this.form.patchValue({ image: file });
+      this.form.get('image')?.updateValueAndValidity();
+      console.log(file);
+      console.log(this.form);
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (reader.result !== null && typeof reader.result === 'string') {
+          this.imagePreview = reader.result;
+        } else {
+          console.error('Failed to load image preview');
+        }
+      };
+      reader.readAsDataURL(file);
+    } else {
+      console.error('Failed to load image preview');
+    }
   }
 
   onSavePost() {
