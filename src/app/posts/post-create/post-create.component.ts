@@ -3,6 +3,7 @@ import { FormControl, FormGroup, Validator, Validators } from '@angular/forms';
 import { PostsService } from '../posts.service';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { Post } from '../post.model';
+import { mimeType } from './mime-type.validator';
 
 @Component({
   selector: 'app-post-create',
@@ -30,7 +31,10 @@ export class PostCreateComponent implements OnInit {
         validators: [Validators.required, Validators.minLength(3)],
       }),
       content: new FormControl(null, { validators: [Validators.required] }),
-      image: new FormControl(null, { validators: Validators.required }),
+      image: new FormControl(null, {
+        validators: [Validators.required],
+        asyncValidators: [mimeType],
+      }),
     });
     this.route.paramMap.subscribe((paramMap: ParamMap) => {
       if (paramMap.has('postId')) {
@@ -44,10 +48,11 @@ export class PostCreateComponent implements OnInit {
             id: postData._id,
             title: postData.title,
             content: postData.content,
+            imagePath: postData.imagePath,
           };
           this.form.setValue({
-            title: this.post.title,
-            content: this.post.content,
+            title: this.post?.title ?? '',
+            content: this.post?.content ?? '',
           });
         });
       } else {
@@ -56,6 +61,29 @@ export class PostCreateComponent implements OnInit {
       }
     });
   }
+
+  // onImagePicked(event: Event) {
+  //   const inputElement = event.target as HTMLInputElement;
+
+  //   if (inputElement && inputElement.files && inputElement.files.length > 0) {
+  //     const file = inputElement.files[0];
+  //     this.form.patchValue({ image: file });
+  //     this.form.get('image')?.updateValueAndValidity();
+  //     console.log(file);
+  //     console.log(this.form);
+  //     const reader = new FileReader();
+  //     reader.onload = () => {
+  //       if (reader.result !== null && typeof reader.result === 'string') {
+  //         this.imagePreview = reader.result;
+  //       } else {
+  //         console.error('Failed to load image preview');
+  //       }
+  //     };
+  //     reader.readAsDataURL(file);
+  //   } else {
+  //     console.error('Failed to load image preview');
+  //   }
+  // }
 
   onImagePicked(event: Event) {
     const inputElement = event.target as HTMLInputElement;
@@ -81,15 +109,16 @@ export class PostCreateComponent implements OnInit {
   }
 
   onSavePost() {
-    if (this.form.invalid) {
-      return;
-    }
+    // if (this.form.invalid) {
+    //   return;
+    // }
     this.isLoading = true;
     if (this.mode === 'create') {
       this.postsService.addPost(
         '',
         this.form.value.title,
-        this.form.value.content
+        this.form.value.content,
+        this.form.value.image
       );
     } else {
       this.postsService.updatePost(

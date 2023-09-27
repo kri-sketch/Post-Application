@@ -22,6 +22,7 @@ export class PostsService {
               title: post.title,
               content: post.content,
               id: post._id,
+              imagePath: post.imagePath,
             };
           });
         })
@@ -36,24 +37,32 @@ export class PostsService {
   }
 
   getPost(id: string) {
-    return this.http.get<{ _id: string; title: string; content: string }>(
-      'http://localhost:3000/api/posts/' + id
-    );
+    return this.http.get<{
+      imagePath: string;
+      _id: string;
+      title: string;
+      content: string;
+    }>('http://localhost:3000/api/posts/' + id);
   }
 
-  addPost(id: string, title: string, content: string) {
-    const post: Post = {
-      id: id,
-      title: title,
-      content: content,
-    };
+  addPost(id: string, title: string, content: string, image: File) {
+    const postData = new FormData();
+    postData.append('title', title);
+    postData.append('content', content);
+    postData.append('image', image);
     this.http
-      .post<{ message: string; postId: string }>(
+      .post<{ message: string; post: Post }>(
         'http://localhost:3000/api/posts/',
-        post
+        postData
       )
       .subscribe((responseData) => {
-        const id = responseData.postId;
+        const post: Post = {
+          id: responseData.post.id,
+          title: title,
+          content: content,
+          imagePath: responseData.post.imagePath,
+        };
+        const id = responseData.post.id;
         post.id = id;
         this.posts.push(post);
         this.postsUpdated.next([...this.posts]);
@@ -70,7 +79,12 @@ export class PostsService {
       });
   }
   updatePost(id: string, title: string, content: string) {
-    const post: Post = { id: id, title: title, content: content };
+    const post: Post = {
+      id: id,
+      title: title,
+      content: content,
+      imagePath: '',
+    };
     this.http.put('http://localhost:3000/api/posts/' + id, post).subscribe(
       (response) => {
         const updatePosts = [...this.posts];
