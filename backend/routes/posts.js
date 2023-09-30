@@ -18,13 +18,13 @@ const storage = multer.diskStorage({
       error = null;
     }
 
-    cb(error, "/backend/images");
+    cb(error, "backend/images/");
   },
   filename: (req, file, cb) => {
-    const name = file.originalname.toLowerCase().split("").join("-");
+    const name = file.originalname.toLowerCase().split(" ").join("-");
     const ext = MIME_TYPE_MAP[file.mimetype];
-    cb(null, name + "-" + Date.now() + "." + ext);
-    cb(null, finalFileName);
+    const finalFileName = name + "-" + Date.now() + "." + ext; // Define finalFileName here
+    cb(null, finalFileName); // Use finalFileName in the callback
   },
 });
 
@@ -44,7 +44,7 @@ router.post(
     const post = new Post({
       title: title,
       content: content,
-      imagePath: url + "backend/images/" + req.file.filename,
+      imagePath: url + "/backend/images/" + req.file.filename,
     });
 
     post.save().then((createdPost) => {
@@ -90,13 +90,17 @@ router.put("/:id", (req, res, next) => {
 });
 
 router.get("/:id", (req, res, next) => {
-  Post.findById(req.params.id).then((post) => {
-    if (post) {
-      res.status(200).json(post);
-    } else {
-      res.status(404).json({ message: "Post not found" });
-    }
-  });
+  Post.findById(req.params.id)
+    .then((post) => {
+      if (post) {
+        res.status(200).json(post);
+      } else {
+        res.status(404).json({ message: "Post not found" });
+      }
+    })
+    .catch((error) => {
+      res.status(500).json({ error: error });
+    });
 });
 
 module.exports = router;
